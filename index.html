@@ -1,0 +1,1229 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style><script src="config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script></head><body><title>Héritage Mécatronique</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap">
+<style>
+/* Layout : en-tête fixe à 3 onglets (Accueil, Statistiques, Attribution) sur fond crème quadrillé, d'après le prototype Héritage Mécatronique.
+   Thème clair unique, choisi volontairement pour suivre la maquette. */
+:root{
+  color-scheme:light;
+  --bg:#f8f7f2; --surface:#fffffd; --surface-2:#f1f0ea; --line:#e6e4dc; --grid:rgba(29,107,82,.045);
+  --fg:#1a2420; --muted:#66706b;
+  --green:#1d6b52; --green-2:#2f9a72; --green-soft:#e8f3ee;
+  --orange:#ee7f4f; --orange-soft:#fdf1ea; --orange-line:#f6d3c0;
+  --err:#c0392b; --err-soft:#fbeae7;
+  --stage-bg:#0f2a22; --stage-card:#163a2f; --stage-line:#245243; --stage-fg:#f4f2ea; --stage-muted:#9cc0b1;
+  --f-display:"Plus Jakarta Sans",system-ui,"Segoe UI",sans-serif;
+  --f-body:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:44px 44px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
+.gutter{padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+.container{max-width:1160px;margin:0 auto}
+button{font:inherit}
+:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+
+/* ---- En-tête ---- */
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:rgba(255,255,253,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top-in{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:68px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+.brand svg{flex:none}
+.brand b{font-family:var(--f-display);font-weight:800;font-size:20px;letter-spacing:-.01em;line-height:1;display:block}
+.brand b span{color:var(--orange)}
+.brand small{display:block;font-size:10px;letter-spacing:.16em;color:var(--muted);font-weight:600;margin-top:3px}
+nav.tabs{display:flex;gap:4px;align-self:stretch}
+nav.tabs a{display:flex;align-items:center;padding:0 18px;color:var(--muted);text-decoration:none;font-weight:500;font-size:16px;position:relative}
+nav.tabs a:hover{color:var(--fg)}
+nav.tabs a.on{color:var(--green);font-weight:600}
+nav.tabs a.on::after{content:"";position:absolute;left:50%;bottom:-1px;width:34px;height:3px;border-radius:2px;background:var(--orange);transform:translateX(-50%)}
+.pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:700;font-size:12px;letter-spacing:.12em;color:var(--green);background:var(--surface)}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green-2);box-shadow:0 0 0 3px var(--green-soft)}
+@media (max-width:760px){
+  .top-in{padding-block:10px 0}
+  nav.tabs{order:3;width:100%;justify-content:space-between;min-height:44px}
+  nav.tabs a{padding:0 6px;font-size:15px}
+  .top .pill{display:none}
+}
+
+/* ---- Éléments communs ---- */
+.view{padding-block:56px 80px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--orange)}
+.h-xl{font-size:clamp(34px,5vw,50px);font-weight:700;letter-spacing:-.035em;line-height:1.08}
+.h-xl em{font-style:normal;color:var(--green)}
+.sub{color:var(--muted);font-size:17px;max-width:62ch;margin:8px 0 0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--green);font-weight:600;padding:12px 20px;cursor:pointer;text-decoration:none;line-height:1.2;transition:transform .15s,box-shadow .15s,background .15s}
+.btn:hover{background:var(--surface-2)}
+.btn.solid{background:var(--green);border-color:var(--green);color:#fff;box-shadow:0 10px 24px -10px rgba(29,107,82,.6)}
+.btn.solid:hover{transform:translateY(-1px);background:#185c46}
+.btn.big{padding:17px 26px;font-size:16px}
+.btn.small{padding:7px 12px;font-size:13px}
+.btn.link{border:0;background:none;padding:0;box-shadow:none}
+.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 1px 2px rgba(26,36,32,.04),0 12px 30px -22px rgba(26,36,32,.25)}
+.ico{width:20px;height:20px;flex:none}
+.hint{font-size:13px;color:var(--muted)}
+
+/* ---- Accueil ---- */
+.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:40px;align-items:center}
+.badge{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--orange-line);background:var(--surface);color:var(--orange);font-size:12px;font-weight:700;letter-spacing:.16em;padding:10px 16px;border-radius:4px;text-transform:uppercase}
+.hero h1{font-size:clamp(44px,6.6vw,76px);letter-spacing:-.055em;line-height:1.02;font-weight:600;margin-top:34px}
+.hero h1 em{display:block;font-style:normal;color:var(--green);font-weight:700}
+.hero .rule{width:96px;height:5px;border-radius:3px;background:var(--orange);margin:6px 0 0 4px}
+.hero p{font-size:18px;color:var(--muted);max-width:46ch;line-height:1.85;margin:22px 0 0}
+.hero .row{margin-top:34px;gap:28px}
+.strip{display:flex;gap:56px;flex-wrap:wrap;margin-top:64px}
+.strip div{display:flex;align-items:center;gap:12px}
+.strip b{font-family:var(--f-display);font-size:24px;color:var(--green);font-weight:700;font-variant-numeric:tabular-nums}
+.strip span{font-size:11px;letter-spacing:.14em;color:var(--muted);font-weight:600;text-transform:uppercase;line-height:1.35}
+.orbit{position:relative;aspect-ratio:1;max-width:480px;width:100%;margin:0 auto}
+.orbit .ring{position:absolute;border-radius:50%;border:1px solid #d7ddd8}
+.orbit .r1{inset:0;border-style:dashed;border-color:#cfd8d2}
+.orbit .r2{inset:12%}
+.orbit .r3{inset:25%;border-color:#c6d2cb}
+.orbit .core{position:absolute;inset:36%;border-radius:50%;background:var(--surface);box-shadow:0 18px 40px -18px rgba(29,107,82,.45);display:grid;place-items:center}
+.orbit .core i{width:78%;height:78%;border-radius:50%;background:var(--green);display:grid;place-items:center;color:#fff}
+.orbit .spin{position:absolute;inset:0;animation:spin 60s linear infinite}
+.orbit .dot{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 7px rgba(238,127,79,.15)}
+.spark{position:absolute;color:var(--orange)}
+.who{position:absolute;display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 26px 12px 12px;box-shadow:0 14px 30px -18px rgba(26,36,32,.35)}
+.who .av{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px}
+.who small{display:block;font-size:10px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.who strong{font-weight:600;font-size:15px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes float{50%{transform:translateY(-8px)}}
+.who.a{top:6%;right:-2%;animation:float 6s ease-in-out infinite}
+.who.b{bottom:12%;left:-6%;animation:float 6s ease-in-out -3s infinite}
+@media (max-width:880px){.hero{grid-template-columns:1fr}.orbit{max-width:380px}.who.b{left:0}.who.a{right:0}}
+@media (prefers-reduced-motion:reduce){.orbit .spin,.who.a,.who.b,.shuffle .spin{animation:none}}
+
+/* Scène d'accueil : le parrain passe la clé de vissage au filleul (boucle de 6 s) */
+.scene{position:relative;margin:0 auto;width:100%;max-width:520px}
+.scene svg{display:block;width:100%;height:auto;overflow:visible}
+.scene .arm,.scene .wr,.scene .person{transform-box:view-box}
+.armP{transform-origin:0 0;animation:armP 6s ease-in-out infinite}
+.armF{transform-origin:0 0;animation:armF 6s ease-in-out infinite}
+.wr{animation:wr 6s ease-in-out infinite}
+.person.p{animation:bobP 6s ease-in-out infinite}
+.person.f{animation:bobF 6s ease-in-out infinite;transform-origin:390px 388px}
+.sparks{opacity:0;animation:sparks 6s ease-in-out infinite}
+.trail{opacity:0;animation:trail 6s ease-in-out infinite}
+@keyframes armP{
+  0%,14%{transform:translate(160px,222px) rotate(-22deg)}
+  22%{transform:translate(160px,222px) rotate(-38deg)}
+  36%,88%{transform:translate(160px,222px) rotate(64deg)}
+  100%{transform:translate(160px,222px) rotate(-22deg)}}
+@keyframes armF{
+  0%,30%{transform:translate(360px,246px) rotate(-64deg)}
+  40%,52%{transform:translate(360px,246px) rotate(22deg)}
+  64%,82%{transform:translate(360px,246px) rotate(62deg)}
+  94%,100%{transform:translate(360px,246px) rotate(-64deg)}}
+@keyframes wr{
+  0%,14%{transform:translate(229px,194px) rotate(-60deg);opacity:1}
+  22%{transform:translate(218px,176px) rotate(-90deg);opacity:1}
+  33%{transform:translate(262px,108px) rotate(90deg);opacity:1}
+  44%,52%{transform:translate(297px,221px) rotate(250deg);opacity:1}
+  64%,82%{transform:translate(328px,184px) rotate(210deg);opacity:1}
+  88%{transform:translate(328px,176px) rotate(210deg);opacity:0}
+  89%{transform:translate(229px,194px) rotate(-60deg);opacity:0}
+  100%{transform:translate(229px,194px) rotate(-60deg);opacity:1}}
+@keyframes bobP{0%,14%,40%,100%{transform:none}22%{transform:translateY(-4px)}}
+@keyframes bobF{0%,56%,90%,100%{transform:none}66%{transform:translateY(-10px)}74%{transform:none}80%{transform:translateY(-6px)}}
+@keyframes sparks{0%,60%{opacity:0;transform:scale(.6)}68%,80%{opacity:1;transform:none}88%,100%{opacity:0}}
+@keyframes trail{0%,18%{opacity:0}26%,40%{opacity:.7}50%,100%{opacity:0}}
+.sparks{transform-box:fill-box;transform-origin:center}
+.scene .who.a{top:2%;left:-2%;right:auto}
+.scene .who.b{bottom:auto;top:8%;right:-2%;left:auto}
+@media (max-width:880px){.scene{max-width:400px}.scene .who.a{left:0}.scene .who.b{right:0}}
+@media (prefers-reduced-motion:reduce){
+  .armP,.armF,.wr,.person.p,.person.f,.sparks,.trail{animation:none}
+  .armP{transform:translate(160px,222px) rotate(-22deg)} .armF{transform:translate(360px,246px) rotate(22deg)}
+  .wr{transform:translate(262px,200px) rotate(-90deg)}}
+
+/* ---- Statistiques ---- */
+.head-row{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.notice{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:var(--orange-soft);border:1px solid var(--orange-line);border-radius:8px;padding:14px 20px;margin-top:36px;color:#6a4a3a}
+.notice .btn.link{color:#c4582a;font-weight:700}
+.notice.ok{background:var(--green-soft);border-color:#cfe5da;color:var(--green)}
+.cards{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr);gap:22px;margin-top:22px}
+@media (max-width:980px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.cards .cap{grid-column:1/-1}}
+@media (max-width:640px){.cards{grid-template-columns:1fr}}
+.fcard{padding:28px;display:flex;flex-direction:column;gap:22px;border-top:3px solid var(--accent);position:relative;overflow:hidden;min-width:0}
+.fcard.tctl{--accent:var(--orange);--soft:var(--orange-soft)} .fcard.ama{--accent:var(--green-2);--soft:var(--green-soft)} .fcard.cap{--accent:var(--green);--soft:var(--green-soft)}
+.fcard>*{position:relative;z-index:1}
+.fcard::after{content:"";position:absolute;right:-70px;top:-70px;width:150px;height:150px;z-index:0;border-radius:50%;border:22px solid var(--soft);opacity:.8;pointer-events:none}
+.ftop{display:flex;align-items:flex-start;gap:16px;position:relative;z-index:1}
+.letter{width:54px;height:54px;border-radius:8px;background:var(--soft);color:var(--accent);display:grid;place-items:center;font-family:var(--f-display);font-size:24px;font-weight:600;flex:none}
+.ftop small{display:block;font-size:11px;letter-spacing:.16em;color:var(--muted);font-weight:600;text-transform:uppercase}
+.ftop h3{font-size:30px;font-weight:700;letter-spacing:-.02em;line-height:1.15}
+.total{margin-left:auto;text-align:right}
+.total b{display:block;font-family:var(--f-display);font-size:36px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.total small{font-size:10px;letter-spacing:.14em}
+.fname{color:var(--muted);margin:0;min-height:3em}
+.bars{display:flex;flex-direction:column;gap:18px;margin-top:auto}
+.bar-l{display:flex;justify-content:space-between;font-size:14px;color:#3c4642}
+.bar-l b{font-variant-numeric:tabular-nums}
+.bar{height:7px;border-radius:4px;background:var(--surface-2);margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:4px;background:var(--accent);transition:width .6s}
+.cap .ftop h3{font-size:24px;white-space:nowrap}
+.cap .ftop small{white-space:nowrap}
+.rules span{white-space:nowrap}
+.cap-foot span{white-space:nowrap}
+.cap .letter{font-size:0}
+.state{margin-left:auto;font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px;background:var(--green-soft);color:var(--green);display:inline-flex;gap:6px;align-items:center;white-space:nowrap}
+.state::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.state.bad{background:var(--err-soft);color:var(--err)}
+.cap-body{display:flex;gap:24px;align-items:center;flex-wrap:wrap}
+.ringbox{position:relative;width:122px;height:122px;flex:none}
+.ringbox svg{transform:rotate(-90deg)}
+.ringbox div{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.ringbox b{font-family:var(--f-display);font-size:24px;font-weight:700;line-height:1}
+.ringbox small{font-size:9px;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.rules{flex:1;min-width:160px;display:flex;flex-direction:column}
+.rules div{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:12px 0;font-size:14px;color:#3c4642}
+.rules div+div{border-top:1px solid var(--line)}
+.rules b{font-family:var(--f-display);color:var(--green);font-size:24px;margin-right:4px}
+.rules span small{font-size:11px;color:var(--muted)}
+.cap-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:11px;letter-spacing:.1em;color:var(--muted);font-weight:600;flex-wrap:wrap}
+.cap-foot hr{flex:1;border:0;border-top:1px solid var(--line);min-width:20px;margin:0}
+.cap-warn{font-size:13px;color:var(--err);margin:0}
+.next{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;padding:26px 28px;margin-top:26px}
+.next h3{font-size:22px;font-weight:700;letter-spacing:-.02em;margin-top:4px}
+
+/* Import */
+.import{margin-top:22px;padding:26px;display:flex;flex-direction:column;gap:18px}
+.import-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start}
+.import-head h3{font-size:20px}
+.slots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.slots{grid-template-columns:1fr}}
+.slot{border:1.5px dashed var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px;background:var(--surface);transition:border-color .15s,background .15s;min-width:0}
+.slot.drag{border-color:var(--green);background:var(--green-soft)}
+.slot-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.slot-top strong{display:block}
+.tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.12em;padding:3px 9px;border-radius:4px;margin-right:6px;vertical-align:1px}
+.tag.tctl{background:var(--orange-soft);color:#c4582a} .tag.ama{background:var(--green-soft);color:var(--green)}
+.tag.demo{background:var(--surface-2);color:var(--muted)}
+.slot-top .n{font-family:var(--f-display);font-size:28px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.meta select{font:inherit;font-size:13px;padding:5px 8px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--fg);max-width:100%}
+.names{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .err{color:var(--err);font-size:13px}
+.slot .warn{color:#b0611f;font-size:13px}
+input[type=file]{display:none}
+
+/* ---- Attribution ---- */
+.back{display:inline-flex;align-items:center;gap:10px;color:var(--muted);text-decoration:none;font-size:14px;margin-bottom:40px}
+.back:hover{color:var(--fg)}
+.draw{margin-top:36px;padding:56px 24px 48px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px}
+.shuffle{position:relative;width:212px;height:212px;margin-bottom:28px}
+.shuffle .ring{position:absolute;border-radius:50%}
+.shuffle .o{inset:0;border:2px dashed #dedcd4}
+.shuffle .m{inset:22px;border:1px solid var(--line);background:var(--surface)}
+.shuffle .c{inset:51px;background:var(--green);display:grid;place-items:center;color:#fff;box-shadow:0 16px 34px -14px rgba(29,107,82,.7)}
+.shuffle .spin{position:absolute;inset:0;animation:spin 40s linear infinite}
+.shuffle .spin i{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--orange);margin:-4.5px 0 0 -4.5px}
+.shuffle.busy .spin{animation-duration:1.4s}
+.shuffle.busy .c svg{animation:spin 1s linear infinite}
+.draw h2{font-size:30px;font-weight:700;letter-spacing:-.02em}
+.draw p{color:var(--muted);margin:0}
+.settings{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;margin:22px 0 4px;font-size:14px}
+.settings label{display:flex;gap:8px;align-items:center}
+.settings input[type=number]{width:64px;font:inherit;padding:7px 8px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.settings input[type=checkbox]{accent-color:var(--green);width:16px;height:16px}
+.problems{background:var(--err-soft);color:var(--err);border-radius:8px;padding:12px 16px;text-align:left;font-size:14px;max-width:640px;margin-top:14px}
+.problems ul{margin:4px 0 0;padding-left:18px}
+.draw .btn.solid{margin-top:22px}
+.demo-note{font-size:13px;color:#b0611f;margin-top:10px}
+
+/* Résultats */
+.results{margin-top:44px;display:flex;flex-direction:column;gap:20px}
+.res-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.res-head h2{font-size:28px;font-weight:700;letter-spacing:-.02em;margin-top:6px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{padding:18px 20px}
+.kpi b{display:block;font-family:var(--f-display);font-size:30px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--green)}
+.kpi span{font-size:13px;color:var(--muted)}
+.confirm{background:var(--orange-soft);border:1px solid var(--orange-line);border-radius:8px;padding:14px 18px;color:#6a4a3a}
+.confirm .row{margin-top:10px}
+.lot{overflow:hidden}
+.lot-h{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.lot-h h3{font-size:19px;font-weight:700}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:11px 20px;vertical-align:top}
+tbody tr+tr td{border-top:1px solid var(--line)}
+th{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--surface-2)}
+td.num{color:var(--muted);width:44px;font-variant-numeric:tabular-nums}
+td .f{display:block}
+.saved{font-size:13px;color:var(--muted)}
+
+/* Partage et résultats */
+.share{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px 24px;align-items:center;padding:22px 24px;border-left:4px solid var(--orange)}
+@media (max-width:700px){.share{grid-template-columns:1fr}}
+.share h3{font-size:20px;font-weight:700;margin-top:4px}
+.res-empty{margin-top:32px;padding:40px 24px;text-align:center;color:var(--muted)}
+.search{display:flex;align-items:center;gap:12px;margin-top:32px;padding:6px 18px;color:var(--muted)}
+.search input{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:20px;padding:14px 0;color:var(--fg);outline:none}
+.search:focus-within{outline:3px solid var(--orange);outline-offset:2px}
+.matches{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-top:18px}
+.match{padding:22px;display:flex;flex-direction:column;gap:12px;border-top:3px solid var(--c)}
+.match.tctl{--c:var(--orange)} .match.ama{--c:var(--green-2)}
+.match .who-l{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.match .nm{font-family:var(--f-display);font-size:22px;font-weight:700;letter-spacing:-.01em;line-height:1.2}
+.match .rel{font-size:15px}
+.match .rel b{color:var(--green)}
+.match hr{border:0;border-top:1px solid var(--line);margin:0}
+.all{margin-top:30px}
+.modal{position:fixed;inset:0;z-index:60;background:rgba(15,42,34,.45);display:grid;place-items:center;padding:20px}
+.modal-card{width:min(420px,100%);padding:26px;display:flex;flex-direction:column;gap:14px}
+.modal-card label{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:500}
+.modal-card input{font:inherit;padding:10px 12px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--fg);width:100%}
+@media (max-width:760px){#orgBtn{padding:6px 10px}}
+.lockbox{display:flex;flex-direction:column;gap:8px;align-items:center;background:var(--green-soft);border:1px solid #cfe5da;border-radius:10px;padding:16px 20px;margin-top:14px;max-width:640px;color:var(--green)}
+input[type=password]{font:inherit;padding:9px 12px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--fg);min-width:0;width:200px;max-width:100%}
+.all summary{cursor:pointer;font-weight:600;color:var(--green)}
+
+/* ---- Mode cérémonie ---- */
+#stage{position:fixed;inset:0;background:var(--stage-bg);color:var(--stage-fg);z-index:50;display:flex;flex-direction:column;
+  background-image:radial-gradient(circle at 85% 0%,rgba(238,127,79,.16),transparent 40%),linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:auto,44px 44px,44px 44px;
+  padding-top:max(22px,env(safe-area-inset-top,0px));padding-bottom:max(18px,env(safe-area-inset-bottom,0px));padding-left:max(28px,env(safe-area-inset-left,0px));padding-right:max(28px,env(safe-area-inset-right,0px))}
+.st-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.st-brand{font-family:var(--f-display);font-weight:800;font-size:clamp(15px,1.5vw,22px)}
+.st-brand{display:flex;align-items:center;gap:12px}
+.st-brand span span{color:var(--orange)}
+.st-logo{display:flex}
+.st-brand small{display:block;font-family:var(--f-body);font-weight:600;font-size:clamp(10px,.8vw,12px);letter-spacing:.16em;color:var(--stage-muted)}
+.st-lot{font-family:var(--f-display);font-weight:700;letter-spacing:-.04em;font-size:clamp(38px,5.5vw,84px);line-height:1;margin-top:10px}
+.st-lot small{font-size:.36em;color:var(--stage-muted);font-weight:500;margin-left:10px;letter-spacing:0}
+.st-legend{display:flex;gap:10px}
+.st-legend span{font-weight:700;letter-spacing:.12em;font-size:clamp(12px,1.1vw,16px);padding:5px 14px;border-radius:4px}
+.lg-tctl{background:rgba(238,127,79,.18);color:#ffad86} .lg-ama{background:rgba(70,190,145,.18);color:#7fe0b8}
+.st-grid{flex:1;display:grid;gap:clamp(10px,1.4vw,20px);margin:clamp(14px,2.5vh,30px) 0;align-content:center;min-height:0;overflow:auto}
+.fam{background:var(--stage-card);border:1px solid var(--stage-line);border-radius:12px;padding:clamp(14px,1.6vw,24px);display:flex;flex-direction:column;gap:clamp(6px,1vh,12px);position:relative;overflow:hidden;min-width:0;border-top:4px solid var(--c)}
+.fam.tctl{--c:var(--orange)} .fam.ama{--c:#46be91}
+.fam .k{font-weight:700;letter-spacing:.14em;font-size:clamp(11px,1vw,15px);color:var(--c)}
+.fam .lbl{font-size:clamp(10px,.85vw,13px);color:var(--stage-muted);text-transform:uppercase;letter-spacing:.12em}
+.fam .par{font-family:var(--f-display);font-weight:700;letter-spacing:-.02em;font-size:clamp(20px,2.3vw,38px);line-height:1.1}
+.fam .fil{font-size:clamp(15px,1.5vw,24px);font-weight:500;line-height:1.3}
+.fam hr{border:0;border-top:1px dashed var(--stage-line);margin:2px 0;width:100%}
+.fam.hide{display:grid;place-items:center;border-top-color:var(--stage-line);color:#3d6b5b;font-family:var(--f-display);font-size:clamp(30px,4vw,60px);font-weight:700}
+.fam.reveal{animation:pop .55s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes pop{from{transform:scale(.85) rotateX(40deg);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.fam.reveal{animation:none}}
+.st-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.st-bar .btn{background:rgba(255,255,255,.06);border-color:var(--stage-line);color:var(--stage-fg);padding:10px 16px}
+.st-bar .btn:hover{background:rgba(255,255,255,.12)}
+.st-bar .btn.solid{background:var(--orange);border-color:var(--orange);color:#1b0f08;box-shadow:none}
+.st-dots{display:flex;gap:6px;flex-wrap:wrap;max-width:40%}
+.st-dots i{width:10px;height:10px;border-radius:50%;background:var(--stage-line);display:block}
+.st-dots i.on{background:var(--orange)} .st-dots i.done{background:#4f8a75}
+.st-help{font-size:13px;color:var(--stage-muted)}
+.st-prog{position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(255,255,255,.06)}
+.st-prog i{display:block;height:100%;width:0;background:var(--orange)}
+.st-prog i.run{animation:prog var(--d,4s) linear forwards}
+@keyframes prog{from{width:0}to{width:100%}}
+.st-end{grid-column:1/-1;text-align:center;font-family:var(--f-display);font-size:clamp(28px,4vw,60px);font-weight:700;letter-spacing:-.03em}
+.st-end small{display:block;font-family:var(--f-body);font-size:.35em;color:var(--stage-muted);font-weight:500;letter-spacing:0;margin-top:10px}
+</style>
+
+<header class="top">
+  <div class="container gutter top-in">
+    <a class="brand" href="#accueil" aria-label="Héritage Mécatronique, accueil">
+      <svg width="42" height="42" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M33.97 16.13 L38.22 16.82 L38.22 23.18 L33.97 23.87 L32.62 27.15 L35.14 30.64 L30.64 35.14 L27.15 32.62 L23.87 33.97 L23.18 38.22 L16.82 38.22 L16.13 33.97 L12.85 32.62 L9.36 35.14 L4.86 30.64 L7.38 27.15 L6.03 23.87 L1.78 23.18 L1.78 16.82 L6.03 16.13 L7.38 12.85 L4.86 9.36 L9.36 4.86 L12.85 7.38 L16.13 6.03 L16.82 1.78 L23.18 1.78 L23.87 6.03 L27.15 7.38 L30.64 4.86 L35.14 9.36 L32.62 12.85Z" stroke="#1d6b52" stroke-width="1.7" stroke-linejoin="round"/><circle cx="20" cy="20" r="9.5" fill="#1d6b52"/><rect x="16.2" y="16.2" width="7.6" height="7.6" rx="1.3" stroke="#fff" stroke-width="1.3"/><path d="M20 16.2V12.6M20 23.8v3.6M16.2 20h-3.6M23.8 20h3.6" stroke="#ee7f4f" stroke-width="1.3" stroke-linecap="round"/><circle cx="20" cy="12.2" r="1.3" fill="#ee7f4f"/><circle cx="20" cy="27.8" r="1.3" fill="#ee7f4f"/><circle cx="12.2" cy="20" r="1.3" fill="#ee7f4f"/><circle cx="27.8" cy="20" r="1.3" fill="#ee7f4f"/><circle cx="20" cy="20" r="1.4" fill="#fff"/></svg>
+      <span><b>HÉRITAGE <span>MÉCATRONIQUE</span></b><small>ESTLC · CÉRÉMONIE DE PARRAINAGE</small></span>
+    </a>
+    <nav class="tabs" aria-label="Sections">
+      <a href="#accueil" data-tab="accueil">Accueil</a>
+      <a href="#statistiques" data-tab="statistiques">Statistiques</a>
+      <a href="#attribution" data-tab="attribution">Attribution</a>
+      <a href="#resultats" data-tab="resultats">Résultats</a>
+    </nav>
+    <span class="row" style="gap:10px"><button class="btn small" type="button" id="orgBtn" hidden>Espace organisateur</button><span class="pill">ESTLC 2026</span></span>
+  </div>
+</header>
+
+<main>
+<!-- =============== ACCUEIL =============== -->
+<section class="view gutter" data-view="accueil">
+  <div class="container hero">
+    <div>
+      <span class="badge"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3l1.6 4.4L15 9l-4.4 1.6L9 15l-1.6-4.4L3 9l4.4-1.6z"/><path d="M18 13l.8 2.2L21 16l-2.2.8L18 19l-.8-2.2L15 16l2.2-.8z"/></svg>Cérémonie de parrainage · 2026</span>
+      <h1>Bienvenue au parrainage du <em>Génie Mécatronique</em></h1>
+      <div class="rule"></div>
+      <p>Quand l'expérience rencontre l'ambition, de nouvelles trajectoires prennent vie. Créons des liens qui feront grandir toute une génération.</p>
+      <div class="row">
+        <a class="btn solid big" href="#statistiques">Commencer l'expérience <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a class="btn solid big" href="#resultats" id="homeFind" hidden>Retrouver mon parrain ou filleul</a>
+        <a class="btn link" href="#statistiques">Voir les effectifs <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20h16M7 16V9M12 16V5M17 16v-4"/></svg></a>
+      </div>
+      <div class="strip">
+        <div><b>02</b><span>Filières<br>réunies</span></div>
+        <div><b>01</b><span>Communauté</span></div>
+        <div><b>∞</b><span>Possibilités</span></div>
+      </div>
+    </div>
+    <figure class="scene" aria-label="Un parrain passe une clé de vissage à son filleul">
+      <svg viewBox="0 0 520 440" role="img" aria-hidden="true">
+        <defs>
+          <radialGradient id="glow" cx="50%" cy="45%" r="55%"><stop offset="0" stop-color="#e8f3ee"/><stop offset="1" stop-color="#e8f3ee" stop-opacity="0"/></radialGradient>
+          <g id="wrench"><path transform="translate(-26 -26) scale(2.2)" d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" fill="#b9c4be" stroke="#1d6b52" stroke-width="1.3" stroke-linejoin="round"/></g>
+        </defs>
+        <circle cx="260" cy="215" r="205" fill="url(#glow)"/>
+        <circle cx="260" cy="215" r="196" fill="none" stroke="#cfd8d2" stroke-dasharray="3 7"/>
+        <circle cx="260" cy="215" r="150" fill="none" stroke="#dfe5e0"/>
+        <path class="trail" d="M222 180 Q 262 70 300 214" fill="none" stroke="#ee7f4f" stroke-width="2" stroke-dasharray="2 9" stroke-linecap="round"/>
+        <ellipse cx="260" cy="392" rx="210" ry="10" fill="#1d6b52" opacity=".07"/>
+
+        <!-- Parrain (niveau 4) -->
+        <g class="person p">
+          <rect x="108" y="300" width="18" height="88" rx="9" fill="#23332d"/>
+          <rect x="134" y="300" width="18" height="88" rx="9" fill="#23332d"/>
+          <path d="M92 318 v-78 a38 38 0 0 1 76 0 v78 z" fill="#1d6b52"/>
+          <path d="M120 206 l10 18 l10 -18" fill="#e8f3ee"/>
+          <rect x="122" y="186" width="16" height="22" rx="6" fill="#7a4a2e"/>
+          <circle cx="130" cy="160" r="33" fill="#8a5636"/>
+          <path d="M97 154 a33 33 0 0 1 66 0 q-10 -12 -33 -12 t-33 12z" fill="#1e1410"/>
+          <circle cx="143" cy="161" r="3.2" fill="#1e1410"/><circle cx="125" cy="161" r="3.2" fill="#1e1410"/>
+          <path d="M127 175 q8 7 16 0" fill="none" stroke="#1e1410" stroke-width="2.4" stroke-linecap="round"/>
+          <!-- bras gauche au repos -->
+          <rect x="84" y="226" width="16" height="70" rx="8" fill="#185c46" transform="rotate(8 92 232)"/>
+          <circle cx="86" cy="296" r="8" fill="#8a5636"/>
+        </g>
+        <g class="arm armP">
+          <rect x="0" y="-8" width="72" height="16" rx="8" fill="#185c46"/>
+          <circle cx="74" cy="0" r="8.5" fill="#8a5636"/>
+        </g>
+
+        <!-- Filleul (niveau 3) -->
+        <g class="person f">
+          <rect x="370" y="312" width="17" height="76" rx="8.5" fill="#2e3a44"/>
+          <rect x="394" y="312" width="17" height="76" rx="8.5" fill="#2e3a44"/>
+          <path d="M354 328 v-70 a36 36 0 0 1 72 0 v70 z" fill="#ee7f4f"/>
+          <path d="M380 226 l10 16 l10 -16" fill="#fdf1ea"/>
+          <rect x="382" y="208" width="16" height="20" rx="6" fill="#6b3f26"/>
+          <circle cx="390" cy="184" r="30" fill="#704329"/>
+          <path d="M360 180 a30 30 0 0 1 60 0 q-6 -6 -14 -6 q-8 -10 -22 -6 q-14 -2 -24 12z" fill="#1e1410"/>
+          <circle cx="377" cy="186" r="3" fill="#1e1410"/><circle cx="394" cy="186" r="3" fill="#1e1410"/>
+          <path class="mouth" d="M378 199 q7 6 14 0" fill="none" stroke="#1e1410" stroke-width="2.4" stroke-linecap="round"/>
+          <rect x="420" y="246" width="15" height="66" rx="7.5" fill="#d9693a" transform="rotate(-8 428 252)"/>
+          <circle cx="436" cy="312" r="7.5" fill="#704329"/>
+        </g>
+        <g class="arm armF">
+          <rect x="-66" y="-7.5" width="66" height="15" rx="7.5" fill="#d9693a"/>
+          <circle cx="-68" cy="0" r="8" fill="#704329"/>
+        </g>
+
+        <g class="wr"><use href="#wrench"/></g>
+        <g class="sparks" fill="#ee7f4f">
+          <path d="M318 118 l3 10 l10 3 l-10 3 l-3 10 l-3 -10 l-10 -3 l10 -3z"/>
+          <path d="M352 150 l2 6 l6 2 l-6 2 l-2 6 l-2 -6 l-6 -2 l6 -2z"/>
+          <path d="M296 150 l2 6 l6 2 l-6 2 l-2 6 l-2 -6 l-6 -2 l6 -2z"/>
+        </g>
+      </svg>
+      <div class="who a"><span class="av" style="background:var(--green)">N4</span><span><small>Parrain</small><strong>Partager</strong></span></div>
+      <div class="who b"><span class="av" style="background:var(--orange)">N3</span><span><small>Filleul</small><strong>Apprendre</strong></span></div>
+    </figure>
+  </div>
+</section>
+
+<!-- =============== STATISTIQUES =============== -->
+<section class="view gutter" data-view="statistiques" hidden>
+  <div class="container">
+    <div class="head-row">
+      <div>
+        <div class="eyebrow">Vue d'ensemble</div>
+        <h1 class="h-xl" style="margin-top:14px">Les forces en <em>présence</em></h1>
+        <p class="sub">Une lecture claire des promotions avant de créer les duos.</p>
+      </div>
+      <button class="btn big" type="button" id="importToggle"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 16v4h16v-4"/></svg>Importer les listes</button>
+    </div>
+    <div id="notice"></div>
+    <div class="card import" id="importPanel" hidden>
+      <div class="import-head">
+        <div><h3>Importer les listes</h3><p class="hint" style="margin:4px 0 0">Excel (.xlsx, .xls) ou CSV, une ligne par étudiant. Les colonnes Nom et Prénom sont reconnues automatiquement, même sous une ligne de titre. Glissez un fichier sur une case ou cliquez sur « Choisir un fichier ».</p></div>
+        <button class="btn small" type="button" id="importClose">Fermer</button>
+      </div>
+      <div class="slots" id="slots"></div>
+    </div>
+    <div class="cards" id="cards"></div>
+    <div class="card next">
+      <div><div class="eyebrow">Étape suivante</div><h3>Prêt à créer les rencontres ?</h3></div>
+      <a class="btn solid big" href="#attribution">Lancer l'attribution <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<!-- =============== ATTRIBUTION =============== -->
+<section class="view gutter" data-view="attribution" hidden>
+  <div class="container">
+    <a class="back" href="#statistiques"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Retour aux statistiques</a>
+    <div class="eyebrow">Cérémonie de parrainage</div>
+    <h1 class="h-xl" style="margin-top:14px">Il est temps de passer la clé 🔧➡️</h1>
+    <p class="sub">Notre algorithme répartit équitablement les filleuls, au sein de leur filière, avec un maximum de deux par parrain.</p>
+
+    <div class="card draw">
+      <div class="shuffle" id="shuffle" aria-hidden="true">
+        <div class="ring o"></div><div class="ring m"></div>
+        <div class="spin" id="spinDots"></div>
+        <div class="ring c"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></div>
+      </div>
+      <h2 id="toCreate">0 attributions à créer</h2>
+      <p>TCTL et AMA apparaîtront ensemble dans des lots presque égaux.</p>
+      <div class="settings">
+        <label for="lotSize">Familles par lot <input type="number" id="lotSize" min="2" max="24" value="6"></label>
+        <label for="revealMode"><input type="checkbox" id="revealMode" checked> Révéler les familles une par une pendant la cérémonie</label>
+      </div>
+      <div class="settings" style="margin-top:6px">
+        <label for="autoPlay"><input type="checkbox" id="autoPlay" checked> Affichage automatique des lots</label>
+        <label for="famDelay">Secondes par famille <input type="number" id="famDelay" min="1" max="60" value="4"></label>
+        <label for="lotDelay">Secondes entre deux lots <input type="number" id="lotDelay" min="2" max="120" value="10"></label>
+      </div>
+      <div id="problems"></div>
+      <div class="lockbox" id="lockBox" hidden>
+        <strong>🔒 Le tirage officiel est enregistré et verrouillé</strong>
+        <span class="hint" id="lockInfo"></span>
+        <div class="row" style="justify-content:center"><input type="password" id="lockCode" placeholder="Code d'accès" autocomplete="off" aria-label="Code d'accès"><button class="btn small solid" type="button" id="lockOpen">Déverrouiller</button></div>
+        <span class="hint" id="lockMsg" role="status"></span>
+      </div>
+      <button class="btn solid big" id="drawBtn" type="button"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3l1.6 4.4L15 9l-4.4 1.6L9 15l-1.6-4.4L3 9l4.4-1.6z"/><path d="M18 13l.8 2.2L21 16l-2.2.8L18 19l-.8-2.2L15 16l2.2-.8z"/></svg>Effectuer le tirage aléatoire</button>
+      <button class="btn link" type="button" id="loadDrawBtn" style="margin-top:14px;font-size:14px">Charger un tirage déjà fait (fichier Excel exporté)</button>
+      <div class="hint" id="loadDrawMsg" role="status"></div>
+      <div class="demo-note" id="demoNote" hidden>Attention : des listes de démonstration sont encore utilisées. Importez vos fichiers dans Statistiques.</div>
+    </div>
+
+    <div class="results" id="results" hidden>
+      <div class="res-head">
+        <div><div class="eyebrow">Résultat du tirage</div><h2>Les familles sont formées</h2></div>
+        <div class="row">
+          <button class="btn solid" id="stageBtn" type="button"><svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg>Mode cérémonie</button>
+          <button class="btn" id="xlsxBtn" type="button">Exporter en Excel</button>
+          <button class="btn" id="csvBtn" type="button">Exporter en CSV</button>
+          <button class="btn" id="redrawBtn" type="button">Refaire le tirage</button>
+        </div>
+      </div>
+      <div class="hint" id="exportMsg" role="status"></div>
+      <div class="card share" id="sharePanel">
+        <div>
+          <div class="eyebrow">Pour les absents</div>
+          <h3>Enregistrer ce tirage dans l'application</h3>
+          <p class="hint" style="margin:6px 0 0;max-width:60ch">Le résultat est gravé dans la page « Résultats », protégé par un code d'accès. Avec le lien et le code, chacun peut y chercher son nom et retrouver son parrain ou ses filleuls. Le tirage enregistré est verrouillé : on ne peut pas le refaire par erreur. Pour l'envoyer, utilisez le bouton Partager de l'application (en haut à droite) et choisissez un accès par lien.</p>
+          <div class="hint" id="shareMsg" role="status" style="margin-top:8px"></div>
+        </div>
+        <div class="row" id="shareActions"><button class="btn solid" type="button" id="publishBtn">Enregistrer pour le partage</button></div>
+        <div class="confirm" id="confirmPublish" hidden style="grid-column:1/-1">
+          Choisissez un code d'accès (au moins 6 caractères). Les noms seront chiffrés : sans ce code, personne ne peut les lire, même avec le lien. Donnez le code aux étudiants avec le lien. Un tirage déjà enregistré sera remplacé et ce tirage sera verrouillé.
+          <div class="row"><input type="password" id="pubCode" placeholder="Code d'accès" autocomplete="new-password" aria-label="Code d'accès"><input type="password" id="pubCode2" placeholder="Confirmer le code" autocomplete="new-password" aria-label="Confirmer le code"></div>
+          <div class="row"><button class="btn small solid" id="publishYes" type="button">Chiffrer et enregistrer</button><button class="btn small" id="publishNo" type="button">Annuler</button></div>
+        </div>
+      </div>
+      <div class="confirm" id="confirmRedraw" hidden>
+        Un nouveau tirage remplacera les résultats actuels.
+        <div class="row"><button class="btn small solid" id="redrawYes" type="button">Oui, refaire le tirage</button><button class="btn small" id="redrawNo" type="button">Annuler</button></div>
+      </div>
+      <div class="kpis" id="kpis"></div>
+      <div id="lots" style="display:flex;flex-direction:column;gap:16px"></div>
+      <p class="saved">Le dernier tirage est gardé dans ce navigateur : si la page se recharge pendant la cérémonie, les résultats restent les mêmes.</p>
+    </div>
+  </div>
+</section>
+<!-- =============== RÉSULTATS =============== -->
+<section class="view gutter" data-view="resultats" hidden>
+  <div class="container">
+    <div class="eyebrow">Après la cérémonie</div>
+    <h1 class="h-xl" style="margin-top:14px">Retrouvez votre <em>famille</em></h1>
+    <p class="sub">Tapez votre nom ou votre prénom pour voir votre parrain, vos filleuls et votre lot.</p>
+    <div id="resEmpty" class="card res-empty" hidden></div>
+    <div id="resLocked" class="card res-empty" hidden>
+      <strong style="color:var(--fg);font-size:17px">🔒 Résultats protégés</strong>
+      <p style="margin:6px 0 14px">Entrez le code d'accès donné par les organisateurs.</p>
+      <form class="row" style="justify-content:center" id="codeForm"><input type="password" id="code" placeholder="Code d'accès" autocomplete="off" aria-label="Code d'accès"><button class="btn solid" type="submit">Ouvrir les résultats</button></form>
+      <p class="hint" id="codeMsg" role="status" style="margin-top:10px"></p>
+    </div>
+    <div id="resBody" hidden>
+      <div class="search card">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+        <input id="q" type="search" placeholder="Ex. : KAMGA ou Serge" autocomplete="off" aria-label="Votre nom">
+      </div>
+      <div class="hint" id="resInfo" style="margin-top:10px"></div>
+      <div id="matches" class="matches"></div>
+      <details class="all" id="allRes"><summary>Voir toutes les familles</summary><div id="allLots" style="display:flex;flex-direction:column;gap:14px;margin-top:14px"></div></details>
+    </div>
+  </div>
+</section>
+</main>
+
+<div id="loginModal" class="modal" hidden>
+  <form class="card modal-card" id="loginForm">
+    <h3>Espace organisateur</h3>
+    <p class="hint" style="margin:0">Connexion avec le compte créé dans Supabase.</p>
+    <label for="lgEmail">E-mail<input type="email" id="lgEmail" required autocomplete="username"></label>
+    <label for="lgPass">Mot de passe<input type="password" id="lgPass" required autocomplete="current-password"></label>
+    <div class="row"><button class="btn solid" type="submit">Se connecter</button><button class="btn" type="button" id="lgClose">Annuler</button></div>
+    <p class="hint" id="lgMsg" role="status" style="margin:0"></p>
+  </form>
+</div>
+
+<div id="stage" hidden>
+  <div class="st-top">
+    <div>
+      <div class="st-brand"><span class="st-logo"><svg width="34" height="34" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M33.97 16.13 L38.22 16.82 L38.22 23.18 L33.97 23.87 L32.62 27.15 L35.14 30.64 L30.64 35.14 L27.15 32.62 L23.87 33.97 L23.18 38.22 L16.82 38.22 L16.13 33.97 L12.85 32.62 L9.36 35.14 L4.86 30.64 L7.38 27.15 L6.03 23.87 L1.78 23.18 L1.78 16.82 L6.03 16.13 L7.38 12.85 L4.86 9.36 L9.36 4.86 L12.85 7.38 L16.13 6.03 L16.82 1.78 L23.18 1.78 L23.87 6.03 L27.15 7.38 L30.64 4.86 L35.14 9.36 L32.62 12.85Z" stroke="#7fe0b8" stroke-width="1.7" stroke-linejoin="round"/><circle cx="20" cy="20" r="9.5" fill="#1d6b52"/><rect x="16.2" y="16.2" width="7.6" height="7.6" rx="1.3" stroke="#fff" stroke-width="1.3"/><path d="M20 16.2V12.6M20 23.8v3.6M16.2 20h-3.6M23.8 20h3.6" stroke="#ee7f4f" stroke-width="1.3" stroke-linecap="round"/><circle cx="20" cy="12.2" r="1.3" fill="#ee7f4f"/><circle cx="20" cy="27.8" r="1.3" fill="#ee7f4f"/><circle cx="12.2" cy="20" r="1.3" fill="#ee7f4f"/><circle cx="27.8" cy="20" r="1.3" fill="#ee7f4f"/><circle cx="20" cy="20" r="1.4" fill="#fff"/></svg></span><span>HÉRITAGE <span>MÉCATRONIQUE</span><small>CÉRÉMONIE DE PARRAINAGE · GÉNIE MÉCATRONIQUE · ESTLC</small></span></div>
+      <div class="st-lot" id="stLot">Lot 1</div>
+    </div>
+    <div class="st-legend"><span class="lg-tctl">TCTL</span><span class="lg-ama">AMA</span></div>
+  </div>
+  <div class="st-grid" id="stGrid"></div>
+  <div class="st-bar">
+    <div class="row">
+      <button class="btn" id="stPrev" type="button">← Lot précédent</button>
+      <button class="btn solid" id="stNext" type="button">Suivant →</button>
+      <button class="btn" id="stPlay" type="button">⏸ Pause</button>
+      <button class="btn" id="stFull" type="button">Plein écran</button>
+      <button class="btn" id="stClose" type="button">Quitter</button>
+    </div>
+    <div class="st-dots" id="stDots"></div>
+    <div class="st-help">Espace ou → : suivant · ← : précédent · P : lecture/pause · Échap : quitter</div>
+  </div>
+  <div class="st-prog" aria-hidden="true"><i id="stProg"></i></div>
+</div>
+
+<script type="application/json" id="official">null</script>
+<input type="file" id="drawInput" accept=".xlsx,.xls,.csv">
+<input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.ods,.txt">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function(){
+"use strict";
+// Copie de la page telle qu'écrite, prise avant tout affichage : sert à enregistrer le tirage dans l'application
+const SRC = (()=>{ const h=document.body.innerHTML; const a=h.indexOf("<title>"); const b=h.lastIndexOf("</"+"script>"); return a>=0&&b>a ? h.slice(a,b+9) : ""; })();
+const FILIERES = [
+  {id:"TCTL", name:"Technico-commercial des Transports et de la Logistique", cls:"tctl"},
+  {id:"AMA",  name:"Assemblage Mécatronique et Automobile", cls:"ama"}
+];
+const ROLES = [
+  {id:"p", label:"Niveau 4 · Parrains", sub:"1 ou 2 filleuls chacun", unit:"parrains"},
+  {id:"f", label:"Niveau 3 · Filleuls", sub:"1 parrain chacun", unit:"filleuls"}
+];
+
+// ---------- Données de démonstration (fictives) ----------
+const SAMPLE = {
+  TCTL:{p:["ABENA Marie","BIYA Junior","KAMGA Serge","MBALLA Carine","NGO BAKOP Ruth","TCHOUA Brice","ESSOMBA Yves","NKODO Félix","OWONA Laure","SIMO Patrice","WAMBA Estelle","YOUMBI Gaël"],
+        f:["ATANGANA Paul","BELLA Sandrine","DJOUMESSI Hervé","EKANI Laure","FOUDA Cédric","KENFACK Aline","MANGA Steve","NANA Prisca","ONANA Kevin","TAMO Grâce","ZANG Ulrich","ABEGA Linda","BOUM Martial","EBOGO Nina","KOUAM Rodrigue","MESSI Olive","NDJOCK Franck","TSAFACK Sarah"]},
+  AMA:{p:["AYISSI Boris","DONGMO Patrick","EYENGA Sonia","FOTSO Arnaud","MOUAFO Diane","NJOYA Ibrahim","AWONO Luc","BILOA Rose","KAMDEM Joël","NGUEMA Pascal"],
+       f:["ABOUEM Claude","BEKONO Rita","CHOUPO Eric","ETOA Nadine","GUEMO Frank","LEKANE Joëlle","MBARGA Alain","NDZANA Lionel","TCHAKOUNTE Ivan","ADA Mireille","ESSAMA Bruno","FEUDJIO Clarisse","MEKONGO Hugo","NOAH Sylvie","TIENTCHEU Marc"]}
+};
+const demoList = (fil,role)=>({file:null, sample:true, headers:["Nom complet"], rows:SAMPLE[fil][role].map(n=>[n]), col:"0"});
+
+const state = {lists:{}, result:null};
+FILIERES.forEach(F=>{ state.lists[F.id]={}; ROLES.forEach(R=>{ state.lists[F.id][R.id]=demoList(F.id,R.id); }); });
+
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+function store(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function load(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null}catch(e){return null}}
+const pad2 = n=>String(n).padStart(2,"0");
+
+// ---------- Hasard cryptographique ----------
+function rnd(n){ const a=new Uint32Array(1); const lim=Math.floor(0x100000000/n)*n; let x; do{crypto.getRandomValues(a);x=a[0]}while(x>=lim); return x%n; }
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]} return a; }
+
+// ---------- Lecture des fichiers ----------
+const norm = s=>String(s==null?"":s).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim();
+const HEADER_RE = /\b(nom|noms|prenom|prenoms|name|matricule|etudiant|etudiants|sexe|filiere|niveau|n°|no|num|numero|classe)\b/;
+function parseSheet(aoa){
+  aoa = aoa.map(r=>(r||[]).map(c=>c==null?"":String(c).trim())).filter(r=>r.some(c=>c!==""));
+  if(!aoa.length) return {headers:[],rows:[]};
+  // la ligne d'en-tête est celle qui a le plus de cellules reconnues (un titre "LISTE DES ÉTUDIANTS..." n'en a qu'une)
+  let hi=-1, best=0;
+  for(let i=0;i<Math.min(10,aoa.length);i++){
+    const cells=aoa[i].filter(c=>c!==""); const sc=cells.filter(c=>HEADER_RE.test(norm(c))&&c.length<40).length + (cells.length>1?0.5:0);
+    if(sc>=1 && sc>best){best=sc;hi=i;}
+  }
+  const width = Math.max(...aoa.map(r=>r.length));
+  const headers=[]; for(let j=0;j<width;j++) headers.push((hi>=0&&aoa[hi][j])||("Colonne "+String.fromCharCode(65+j)));
+  const rows = aoa.slice(hi+1).map(r=>{const x=r.slice(); while(x.length<width) x.push(""); return x;});
+  return {headers, rows};
+}
+function guessCol(headers, rows){
+  const h = headers.map(norm);
+  const iNom = h.findIndex(x=>/^(nom|noms|nom de famille|last ?name|surname)$/.test(x));
+  const iPre = h.findIndex(x=>/^(prenom|prenoms|first ?name)$/.test(x));
+  if(iNom>=0 && iPre>=0) return iNom+"+"+iPre;
+  const iFull = h.findIndex(x=>/nom|name|etudiant/.test(x));
+  if(iFull>=0) return String(iFull);
+  let best=0,score=-1;
+  headers.forEach((_,j)=>{ const s=rows.reduce((a,r)=>a+(/[a-zA-ZÀ-ÿ]{2,}/.test(r[j]||"")&&!/^\d+$/.test(r[j])?1:0),0); if(s>score){score=s;best=j} });
+  return String(best);
+}
+const nameOf=(L,row)=>L.col.split("+").map(i=>row[+i]||"").filter(Boolean).join(" ").replace(/\s+/g," ").trim();
+const people=(fil,role)=>{ const L=state.lists[fil][role]; return L.rows.map(r=>nameOf(L,r)).filter(Boolean); };
+function duplicates(names){ const m={}; names.forEach(n=>{const k=n.toLowerCase();m[k]=(m[k]||0)+1}); return names.filter((n,i)=>m[n.toLowerCase()]>1 && names.findIndex(x=>x.toLowerCase()===n.toLowerCase())===i); }
+const anyDemo=()=>FILIERES.some(F=>ROLES.some(R=>state.lists[F.id][R.id].sample));
+
+async function readFile(file){
+  if(typeof XLSX==="undefined") throw new Error("Le lecteur Excel n'a pas pu se charger. Vérifiez la connexion internet, ou utilisez la version hors ligne.");
+  const wb = XLSX.read(await file.arrayBuffer(),{type:"array",codepage:65001});
+  for(const sn of wb.SheetNames){
+    const p = parseSheet(XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:false,defval:""}));
+    if(p.rows.length) return p;
+  }
+  return {headers:[],rows:[]};
+}
+let pending=null;
+$("#fileInput").addEventListener("change",e=>{ const f=e.target.files[0]; e.target.value=""; if(f&&pending) importInto(pending.fil,pending.role,f); });
+async function importInto(fil,role,file){
+  try{
+    const p = await readFile(file);
+    if(!p.rows.length) throw new Error("Aucune ligne trouvée dans ce fichier.");
+    state.lists[fil][role] = {file:file.name, sample:false, headers:p.headers, rows:p.rows, col:guessCol(p.headers,p.rows)};
+    state.result=null; save(); renderAll();
+  }catch(err){ const m=document.getElementById("msg-"+fil+role); if(m){ m.textContent=err.message||String(err); m.hidden=false; } }
+}
+function save(){ store("mecalink.lists", state.lists); store("mecalink.result", state.result); if(typeof sbQueueSave==="function") sbQueueSave(); }
+
+// ---------- Statistiques ----------
+function counts(){
+  const c={}; FILIERES.forEach(F=>c[F.id]={P:people(F.id,"p").length,N:people(F.id,"f").length}); return c;
+}
+function problems(){
+  const errs=[], c=counts();
+  FILIERES.forEach(F=>{ const {P,N}=c[F.id];
+    if(!P) errs.push(`${F.id} : aucun parrain.`);
+    if(!N) errs.push(`${F.id} : aucun filleul.`);
+    if(P && N>2*P) errs.push(`${F.id} : ${N} filleuls pour ${P} parrains. Il faut au moins ${Math.ceil(N/2)} parrains (il en manque ${Math.ceil(N/2)-P}).`);
+  });
+  return errs;
+}
+function renderNotice(){
+  $("#notice").innerHTML = anyDemo()
+    ? `<div class="notice"><span class="row" style="gap:10px"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M9 3l1.6 4.4L15 9l-4.4 1.6L9 15l-1.6-4.4L3 9l4.4-1.6z"/></svg>Vous explorez actuellement les données de démonstration${FILIERES.every(F=>ROLES.every(R=>state.lists[F.id][R.id].sample))?"":" pour certaines listes"}.</span><button class="btn link" type="button" data-open-import>Utiliser mes fichiers ›</button></div>`
+    : `<div class="notice ok"><span>Vos 4 listes sont chargées.</span><button class="btn link" type="button" data-open-import style="color:var(--green)">Voir les fichiers ›</button></div>`;
+}
+function renderCards(){
+  const c=counts(), errs=problems();
+  const cards = FILIERES.map(F=>{ const {P,N}=c[F.id], T=P+N||1;
+    return `<div class="card fcard ${F.cls}">
+      <div class="ftop"><div class="letter">${F.id[0]}</div><div><small>Filière</small><h3>${F.id}</h3></div><div class="total"><b>${pad2(P+N)}</b><small>ÉTUDIANTS</small></div></div>
+      <p class="fname">${esc(F.name)}</p>
+      <div class="bars">
+        <div><div class="bar-l"><span>Niveau 4 · Parrains</span><b>${P}</b></div><div class="bar"><i style="width:${P/T*100}%"></i></div></div>
+        <div><div class="bar-l"><span>Niveau 3 · Filleuls</span><b>${N}</b></div><div class="bar"><i style="width:${N/T*100}%"></i></div></div>
+      </div></div>`; }).join("");
+  const P=FILIERES.reduce((a,F)=>a+c[F.id].P,0), N=FILIERES.reduce((a,F)=>a+c[F.id].N,0), places=2*P;
+  const covered=FILIERES.reduce((a,F)=>a+Math.min(c[F.id].N,2*c[F.id].P),0);
+  const pct = N? Math.round(covered/N*100) : 0, ok=!errs.length;
+  const R=52, L=2*Math.PI*R;
+  const cap = `<div class="card fcard cap">
+      <div class="ftop"><div class="letter"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M15.5 4.8a3.5 3.5 0 010 6.4M18 14.8c2 .7 3.2 2.4 3.5 5.2"/></svg></div>
+        <div><small>Capacité d'accueil</small><h3>${places} places</h3></div><span class="state ${ok?"":"bad"}">${ok?"Capacité suffisante":"Capacité insuffisante"}</span></div>
+      <div class="cap-body">
+        <div class="ringbox"><svg width="122" height="122" viewBox="0 0 122 122"><circle cx="61" cy="61" r="${R}" stroke="var(--surface-2)" stroke-width="12" fill="none"/><circle cx="61" cy="61" r="${R}" stroke="${ok?"var(--green)":"var(--err)"}" stroke-width="12" fill="none" stroke-dasharray="${L*pct/100} ${L}" stroke-linecap="${pct>=100?"butt":"round"}"/></svg><div><b>${pct}%</b><small>Couverture</small></div></div>
+        <div class="rules"><div><span>Pour un parrain</span><span><b>2</b><small>filleuls max.</small></span></div><div><span>Pour un filleul</span><span><b>1</b><small>parrain unique</small></span></div></div>
+      </div>
+      ${errs.length?`<p class="cap-warn">${errs.map(esc).join("<br>")}</p>`:""}
+      <div class="cap-foot"><span>${P} PARRAINS</span><hr><span>${N} FILLEULS</span><hr><span>${Math.max(0,places-N)} PLACES LIBRES</span></div>
+    </div>`;
+  $("#cards").innerHTML = cards+cap;
+}
+function colOptions(L){
+  const opts=[]; const h=L.headers.map(norm);
+  const iNom=h.findIndex(x=>/^(nom|noms)$/.test(x)), iPre=h.findIndex(x=>/^(prenom|prenoms)$/.test(x));
+  if(iNom>=0&&iPre>=0){ opts.push([iNom+"+"+iPre, L.headers[iNom]+" + "+L.headers[iPre]]); opts.push([iPre+"+"+iNom, L.headers[iPre]+" + "+L.headers[iNom]]); }
+  L.headers.forEach((x,i)=>opts.push([String(i),x]));
+  if(!opts.some(o=>o[0]===L.col)) opts.unshift([L.col, L.col.split("+").map(i=>L.headers[+i]).join(" + ")]);
+  return opts;
+}
+function renderSlots(){
+  $("#slots").innerHTML = FILIERES.map(F=>ROLES.map(R=>{ const L=state.lists[F.id][R.id], ppl=people(F.id,R.id), d=duplicates(ppl);
+    return `<div class="slot" data-fil="${F.id}" data-role="${R.id}">
+      <div class="slot-top"><div><span class="tag ${F.cls}">${F.id}</span><strong style="display:inline">${R.label}</strong><div class="hint">${R.sub}</div></div><div class="n">${ppl.length}</div></div>
+      <div class="meta">${L.sample?'<span class="tag demo">DÉMONSTRATION</span>':`<span>📄 ${esc(L.file)}</span>`}
+        <label>Nom affiché <select id="col-${F.id}${R.id}" data-fil="${F.id}" data-role="${R.id}">${colOptions(L).map(o=>`<option value="${o[0]}" ${o[0]===L.col?"selected":""}>${esc(o[1])}</option>`).join("")}</select></label></div>
+      <div class="names">${ppl.slice(0,6).map(esc).join(" · ")}${ppl.length>6?" …":""}</div>
+      ${d.length?`<div class="warn">Nom en double : ${d.map(esc).join(", ")}</div>`:""}
+      <div class="err" id="msg-${F.id}${R.id}" hidden></div>
+      <div class="row"><button class="btn small" type="button" data-pick="${F.id}|${R.id}">Choisir un fichier</button>${L.sample?"":`<button class="btn small" type="button" data-reset="${F.id}|${R.id}">Revenir à la démonstration</button>`}</div>
+    </div>`; }).join("")).join("");
+}
+document.addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  if(b.hasAttribute("data-open-import")){ $("#importPanel").hidden=false; $("#importPanel").scrollIntoView({block:"start"}); }
+  if(b.dataset.pick){ const [fil,role]=b.dataset.pick.split("|"); pending={fil,role}; $("#fileInput").click(); }
+  if(b.dataset.reset){ const [fil,role]=b.dataset.reset.split("|"); state.lists[fil][role]=demoList(fil,role); state.result=null; save(); renderAll(); }
+});
+$("#importToggle").addEventListener("click",()=>{ $("#importPanel").hidden=!$("#importPanel").hidden; });
+$("#importClose").addEventListener("click",()=>{ $("#importPanel").hidden=true; });
+$("#slots").addEventListener("change",e=>{ const s=e.target.closest("select"); if(!s) return; state.lists[s.dataset.fil][s.dataset.role].col=s.value; state.result=null; save(); renderAll(); });
+["dragenter","dragover"].forEach(ev=>$("#slots").addEventListener(ev,e=>{const s=e.target.closest(".slot"); if(!s) return; e.preventDefault(); s.classList.add("drag");}));
+["dragleave","drop"].forEach(ev=>$("#slots").addEventListener(ev,e=>{const s=e.target.closest(".slot"); if(!s) return; e.preventDefault(); s.classList.remove("drag");
+  if(ev==="drop"&&e.dataTransfer.files[0]) importInto(s.dataset.fil,s.dataset.role,e.dataTransfer.files[0]);}));
+
+// ---------- Attribution ----------
+(function dots(){ let h=""; for(let i=0;i<8;i++){ const a=i/8*2*Math.PI; h+=`<i style="left:${50+50*Math.cos(a)}%;top:${50+50*Math.sin(a)}%"></i>`; } $("#spinDots").innerHTML=h; })();
+function renderDraw(){
+  const c=counts(), errs=problems();
+  const n=FILIERES.reduce((a,F)=>a+c[F.id].N,0);
+  $("#toCreate").textContent = `${n} attribution${n>1?"s":""} à créer`;
+  $("#problems").innerHTML = errs.length?`<div class="problems"><strong>Le tirage n'est pas possible :</strong><ul>${errs.map(e=>`<li>${esc(e)}</li>`).join("")}</ul></div>`:"";
+  const OF=OFFX(); const locked = !!OF && !lock.open;
+  $("#lockBox").hidden=!OF && !lock.open;
+  if(OF||lock.open){
+    $("#lockInfo").textContent = lock.open ? (SB?"Déverrouillé : la recherche publique est suspendue jusqu'à la prochaine publication.":"Déverrouillé : le tirage officiel est chargé ci-dessous. Un nouveau tirage devra être réenregistré pour remplacer l'officiel.")
+      : SB ? `Tirage publié le ${fmtDate(OF.date)}, chargé ci-dessous pour la cérémonie. Entrez le code pour le refaire.`
+      : `Tirage du ${fmtDate(OF.date)}. Entrez le code pour l'afficher en cérémonie ou pour le refaire.`;
+    $("#lockCode").parentElement.hidden=lock.open;
+  }
+  $("#drawBtn").disabled=!!errs.length||locked;
+  $("#redrawBtn").disabled=locked;
+  $("#demoNote").hidden=!anyDemo();
+}
+function draw(){
+  const fams=[];
+  FILIERES.forEach(F=>{
+    const P=shuffle(people(F.id,"p")), N=shuffle(people(F.id,"f"));
+    const g=P.map(p=>({fil:F.id,parrain:p,filleuls:[]}));
+    // 1er tour : un filleul par parrain ; 2e tour : les filleuls restants
+    N.forEach((f,i)=>g[i%P.length].filleuls.push(f));
+    fams.push(...g.filter(x=>x.filleuls.length));
+  });
+  const size=Math.max(2,Math.min(24,parseInt($("#lotSize").value,10)||6));
+  const byFil={}, used={}; FILIERES.forEach(F=>{byFil[F.id]=shuffle(fams.filter(x=>x.fil===F.id)); used[F.id]=0;});
+  // fusion proportionnelle : chaque lot reçoit TCTL et AMA dans les mêmes proportions
+  const seq=[];
+  for(let k=0;k<fams.length;k++){
+    let pick=null,bestR=Infinity;
+    FILIERES.forEach(F=>{ const n=byFil[F.id].length; if(used[F.id]<n){ const r=(used[F.id]+0.5)/n; if(r<bestR){bestR=r;pick=F.id} } });
+    seq.push(byFil[pick][used[pick]++]);
+  }
+  // lots presque égaux
+  const nLots=Math.max(1,Math.round(seq.length/size)), lots=[];
+  let start=0; for(let i=0;i<nLots;i++){ const len=Math.floor(seq.length/nLots)+(i<seq.length%nLots?1:0); lots.push(shuffle(seq.slice(start,start+len))); start+=len; }
+  state.result={date:new Date().toISOString(), lots, reveal:$("#revealMode").checked};
+  save(); renderResults(); renderResView();
+}
+function runDraw(){
+  const sh=$("#shuffle"); sh.classList.add("busy"); $("#drawBtn").disabled=true;
+  const reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+  setTimeout(()=>{ draw(); sh.classList.remove("busy"); renderDraw(); $("#results").scrollIntoView({behavior:"smooth",block:"start"}); }, reduce?0:1200);
+}
+$("#drawBtn").addEventListener("click",()=>{ if(state.result){ $("#confirmRedraw").hidden=false; $("#confirmRedraw").scrollIntoView({block:"center"}); } else runDraw(); });
+$("#redrawBtn").addEventListener("click",()=>{$("#confirmRedraw").hidden=false});
+$("#redrawNo").addEventListener("click",()=>{$("#confirmRedraw").hidden=true});
+$("#redrawYes").addEventListener("click",()=>{$("#confirmRedraw").hidden=true; window.scrollTo({top:0}); runDraw();});
+$("#revealMode").addEventListener("change",()=>{ if(state.result){state.result.reveal=$("#revealMode").checked; save();} });
+
+function renderResults(){
+  const R=state.result; $("#results").hidden=!R; if(!R) return;
+  const all=R.lots.flat();
+  const k=(v,l)=>`<div class="card kpi"><b>${v}</b><span>${l}</span></div>`;
+  $("#kpis").innerHTML = k(R.lots.length,"lots") + k(all.length,"familles formées")
+    + FILIERES.map(F=>{const fs=all.filter(x=>x.fil===F.id); return k(fs.reduce((a,x)=>a+x.filleuls.length,0),`filleuls ${F.id} parrainés`)}).join("");
+  $("#lots").innerHTML = R.lots.map((lot,i)=>`
+    <div class="card lot">
+      <div class="lot-h"><h3>Lot ${i+1}</h3><div class="row" style="gap:6px">${FILIERES.map(F=>`<span class="tag ${F.cls}">${F.id} · ${lot.filter(x=>x.fil===F.id).length}</span>`).join("")}</div></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>#</th><th>Filière</th><th>Parrain · niveau 4</th><th>Filleul(s) · niveau 3</th></tr></thead>
+        <tbody>${lot.map((x,j)=>`<tr><td class="num">${j+1}</td><td><span class="tag ${x.fil.toLowerCase()}">${x.fil}</span></td><td><strong>${esc(x.parrain)}</strong></td><td>${x.filleuls.map(f=>`<span class="f">${esc(f)}</span>`).join("")}</td></tr>`).join("")}</tbody>
+      </table></div>
+    </div>`).join("");
+  $("#revealMode").checked = R.reveal!==false;
+}
+
+// ---------- Export ----------
+function exportRows(){
+  const rows=[["Lot","N°","Filière","Parrain (niveau 4)","Filleul (niveau 3)"]];
+  state.result.lots.forEach((lot,i)=>lot.forEach((x,j)=>x.filleuls.forEach(f=>rows.push([i+1,j+1,x.fil,x.parrain,f]))));
+  return rows;
+}
+async function offer(filename,data){
+  const msg=$("#exportMsg"); msg.textContent="";
+  let dl=null; try{ dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null; }catch(e){ dl=null; }
+  if(dl){
+    try{ await dl.save({filename,data}); msg.textContent="Fichier enregistré : "+filename; }
+    catch(err){ msg.textContent = err&&err.code==="declined" ? "Enregistrement annulé." : "Impossible d'enregistrer le fichier ici ("+(err&&err.code||"erreur")+")."; }
+    return;
+  }
+  try{ // version hors ligne : téléchargement direct
+    const a=document.createElement("a"); a.href=URL.createObjectURL(data); a.download=filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000); msg.textContent="Fichier enregistré : "+filename;
+  }catch(e){ msg.textContent="Impossible d'enregistrer le fichier dans cette vue."; }
+}
+const stamp=()=>new Date().toISOString().slice(0,10);
+$("#csvBtn").addEventListener("click",()=>{
+  const csv="﻿"+exportRows().map(r=>r.map(c=>{c=String(c);return /[;"\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c}).join(";")).join("\r\n");
+  offer(`heritage-mecatronique-parrainage-${stamp()}.csv`, new Blob([csv],{type:"text/csv"}));
+});
+$("#xlsxBtn").addEventListener("click",()=>{
+  if(typeof XLSX==="undefined"){ $("#exportMsg").textContent="Le module Excel n'est pas chargé. Utilisez l'export CSV."; return; }
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(exportRows()); ws["!cols"]=[{wch:6},{wch:5},{wch:8},{wch:32},{wch:32}];
+  XLSX.utils.book_append_sheet(wb,ws,"Par lots");
+  FILIERES.forEach(F=>{
+    const r=[];
+    state.result.lots.forEach((lot,i)=>lot.filter(x=>x.fil===F.id).forEach(x=>r.push([x.parrain,x.filleuls[0]||"",x.filleuls[1]||"",i+1])));
+    r.sort((a,b)=>a[0].localeCompare(b[0],"fr"));
+    const s=XLSX.utils.aoa_to_sheet([["Parrain (niveau 4)","Filleul 1","Filleul 2","Lot"],...r]); s["!cols"]=[{wch:32},{wch:32},{wch:32},{wch:6}];
+    XLSX.utils.book_append_sheet(wb,s,F.id);
+  });
+  offer(`heritage-mecatronique-parrainage-${stamp()}.xlsx`, new Blob([XLSX.write(wb,{bookType:"xlsx",type:"array"})]));
+});
+
+// ---------- Mode cérémonie ----------
+const stage={lot:0,shown:0};
+function cols(n){ const w=window.innerWidth; if(w<700) return 1; if(n<=2) return n; if(n<=4) return 2; if(n<=6) return 3; if(n<=8) return 4; return Math.min(5,Math.ceil(n/2)); }
+function renderStage(anim){
+  const lots=state.result.lots, lot=lots[stage.lot], reveal=state.result.reveal!==false;
+  $("#stLot").innerHTML=`Lot ${stage.lot+1}<small>sur ${lots.length}</small>`;
+  const g=$("#stGrid"); g.style.gridTemplateColumns=`repeat(${cols(lot.length)},minmax(0,1fr))`;
+  g.innerHTML=lot.map((x,i)=>{
+    if(reveal && i>=stage.shown) return `<div class="fam hide">?</div>`;
+    return `<div class="fam ${x.fil.toLowerCase()} ${i===anim||anim==="all"?"reveal":""}">
+      <div class="k">${x.fil}</div>
+      <div><div class="lbl">Parrain</div><div class="par">${esc(x.parrain)}</div></div>
+      <hr>
+      <div><div class="lbl">Filleul${x.filleuls.length>1?"s":""}</div>${x.filleuls.map(f=>`<div class="fil">${esc(f)}</div>`).join("")}</div>
+    </div>`;}).join("");
+  $("#stDots").innerHTML=lots.map((_,i)=>`<i class="${i===stage.lot?"on":i<stage.lot?"done":""}"></i>`).join("");
+  $("#stPrev").disabled = stage.lot===0;
+  const allShown = !reveal || stage.shown>=lot.length;
+  $("#stNext").textContent = !allShown ? "Révéler la famille suivante" : (stage.lot<lots.length-1 ? "Lot suivant →" : "Fin de la cérémonie");
+  $("#stNext").disabled = false;
+}
+// Affichage automatique : révèle chaque famille, puis passe au lot suivant
+const auto={on:false,t:null};
+const num=(id,d,min,max)=>{ const v=parseFloat($(id).value); return isFinite(v)?Math.min(max,Math.max(min,v)):d; };
+function autoStop(){ clearTimeout(auto.t); auto.t=null; const p=$("#stProg"); p.classList.remove("run"); p.style.width="0"; }
+function autoSchedule(){
+  autoStop(); if(!auto.on||$("#stage").hidden) return;
+  const lots=state.result.lots, lot=lots[stage.lot], reveal=state.result.reveal!==false;
+  const more = reveal && stage.shown<lot.length;
+  if(!more && stage.lot>=lots.length-1 && $("#stGrid .st-end")){ auto.on=false; updPlay(); return; }
+  const sec = more ? num("#famDelay",4,1,60) : num("#lotDelay",10,2,120);
+  const p=$("#stProg"); p.style.width=""; p.style.setProperty("--d",sec+"s"); void p.offsetWidth; p.classList.add("run");
+  auto.t=setTimeout(()=>{ next(true); autoSchedule(); }, sec*1000);
+}
+function updPlay(){ $("#stPlay").textContent = auto.on ? "⏸ Pause" : "▶ Lecture auto"; }
+function togglePlay(){ auto.on=!auto.on; updPlay(); if(auto.on) autoSchedule(); else autoStop(); }
+$("#stPlay").addEventListener("click",togglePlay);
+["autoPlay","famDelay","lotDelay"].forEach(id=>{
+  const el=$("#"+id), v=load("mecalink."+id); if(v!==null){ if(el.type==="checkbox") el.checked=!!v; else el.value=v; }
+  el.addEventListener("change",()=>store("mecalink."+id, el.type==="checkbox"?el.checked:el.value));
+});
+function next(fromAuto){
+  const lots=state.result.lots, lot=lots[stage.lot], reveal=state.result.reveal!==false;
+  if(reveal && stage.shown<lot.length){ stage.shown++; renderStage(stage.shown-1); return; }
+  if(stage.lot<lots.length-1){ stage.lot++; stage.shown=0; renderStage(reveal?null:"all"); }
+  else if(stage.shown>=lot.length || !reveal){ showEnd(); }
+}
+function showEnd(){
+  const n=state.result.lots.flat().reduce((a,x)=>a+x.filleuls.length,0);
+  const g=$("#stGrid"); g.style.gridTemplateColumns="1fr"; $("#stLot").innerHTML="Fin<small>de la cérémonie</small>"; $("#stNext").disabled=true;
+  g.innerHTML=`<div class="st-end fam-end reveal">Bienvenue dans la famille Mécatronique !<small>${n} filleuls ont reçu leur parrain.</small></div>`;
+}
+function prev(){ if($("#stGrid .st-end")){ renderStage(null); return; } if(stage.lot>0){ stage.lot--; stage.shown=state.result.lots[stage.lot].length; renderStage(null);} }
+function openStage(){ stage.lot=0; stage.shown=0; $("#stage").hidden=false; document.body.style.overflow="hidden"; renderStage(state.result.reveal!==false?null:"all"); $("#stNext").focus();
+  auto.on=$("#autoPlay").checked; updPlay(); autoSchedule(); }
+function closeStage(){ auto.on=false; autoStop(); $("#stage").hidden=true; document.body.style.overflow=""; if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); }
+$("#stageBtn").addEventListener("click",openStage);
+$("#stNext").addEventListener("click",()=>{ next(); autoSchedule(); });
+$("#stPrev").addEventListener("click",()=>{ prev(); autoSchedule(); });
+$("#stClose").addEventListener("click",closeStage);
+$("#stFull").addEventListener("click",()=>{ const el=document.documentElement; if(document.fullscreenElement) document.exitFullscreen().catch(()=>{}); else if(el.requestFullscreen) el.requestFullscreen().catch(()=>{}); });
+document.addEventListener("keydown",e=>{
+  if($("#stage").hidden) return;
+  if(e.key===" "||e.key==="ArrowRight"||e.key==="PageDown"||e.key==="Enter"){ e.preventDefault(); next(); autoSchedule(); }
+  else if(e.key==="ArrowLeft"||e.key==="PageUp"){ e.preventDefault(); prev(); autoSchedule(); }
+  else if(e.key==="p"||e.key==="P"){ e.preventDefault(); togglePlay(); }
+  else if(e.key==="Escape"){ closeStage(); }
+});
+window.addEventListener("resize",()=>{ if(!$("#stage").hidden) renderStage(null); });
+
+
+// ---------- Résultats enregistrés (partage aux absents) ----------
+const OFF_OPEN = '<scr'+'ipt type="application/json" id="offi'+'cial">', OFF_CLOSE = '</scr'+'ipt>';
+let OFFICIAL=null; try{ OFFICIAL=JSON.parse(document.getElementById("official").textContent); }catch(e){ OFFICIAL=null; }
+let UNLOCKED = OFFICIAL&&OFFICIAL.lots ? OFFICIAL : null;   // ancien format non chiffré
+const lock={open:!!UNLOCKED};
+// Chiffrement AES-GCM, clé dérivée du code par PBKDF2
+const b64=u=>btoa(String.fromCharCode(...new Uint8Array(u)));
+const unb64=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
+async function keyFrom(code,salt){
+  const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(code.trim()),"PBKDF2",false,["deriveKey"]);
+  return crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations:200000,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]);
+}
+async function encryptResult(obj,code){
+  const salt=crypto.getRandomValues(new Uint8Array(16)), iv=crypto.getRandomValues(new Uint8Array(12));
+  const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},await keyFrom(code,salt),new TextEncoder().encode(JSON.stringify(obj)));
+  return {v:2,date:obj.date,salt:b64(salt),iv:b64(iv),data:b64(ct)};
+}
+async function decryptOfficial(code){
+  if(!OFFICIAL||!OFFICIAL.data) return null;
+  try{ const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:unb64(OFFICIAL.iv)},await keyFrom(code,unb64(OFFICIAL.salt)),unb64(OFFICIAL.data));
+       return JSON.parse(new TextDecoder().decode(pt)); }catch(e){ return null; }
+}
+async function tryCode(code){
+  const r=await decryptOfficial(code); if(!r) return false;
+  UNLOCKED=r; try{sessionStorage.setItem("hm.code",code)}catch(e){}
+  return true;
+}
+function resultsData(){
+  if(UNLOCKED) return {src:"official",...UNLOCKED};
+  if(OFFICIAL) return {src:"locked"};
+  return state.result?{src:"local",...state.result}:null;
+}
+const fmtDate=d=>{ try{ return new Date(d).toLocaleString("fr-FR",{dateStyle:"long",timeStyle:"short"}); }catch(e){ return ""; } };
+function lotTables(lots){
+  return lots.map((lot,i)=>`
+    <div class="card lot">
+      <div class="lot-h"><h3>Lot ${i+1}</h3><div class="row" style="gap:6px">${FILIERES.map(F=>`<span class="tag ${F.cls}">${F.id} · ${lot.filter(x=>x.fil===F.id).length}</span>`).join("")}</div></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>#</th><th>Filière</th><th>Parrain · niveau 4</th><th>Filleul(s) · niveau 3</th></tr></thead>
+        <tbody>${lot.map((x,j)=>`<tr><td class="num">${j+1}</td><td><span class="tag ${x.fil.toLowerCase()}">${x.fil}</span></td><td><strong>${esc(x.parrain)}</strong></td><td>${x.filleuls.map(f=>`<span class="f">${esc(f)}</span>`).join("")}</td></tr>`).join("")}</tbody>
+      </table></div>
+    </div>`).join("");
+}
+function renderResView(){
+  if(SB){ sbRenderResView(); return; }
+  const D=resultsData();
+  $("#homeFind").hidden=!OFFICIAL;
+  const isLocked = D&&D.src==="locked";
+  $("#resLocked").hidden=!isLocked;
+  $("#resEmpty").hidden=!!D; $("#resBody").hidden=!D||isLocked;
+  if(isLocked) return;
+  if(!D){ $("#resEmpty").innerHTML="Les résultats du parrainage n'ont pas encore été publiés. Revenez après la cérémonie."; return; }
+  const n=D.lots.flat().reduce((a,x)=>a+x.filleuls.length,0);
+  $("#resInfo").textContent = D.src==="official"
+    ? `Résultats officiels du tirage du ${fmtDate(D.date)} · ${n} filleuls parrainés.`
+    : `Tirage de ce navigateur, pas encore enregistré pour le partage (${fmtDate(D.date)}).`;
+  $("#allLots").innerHTML=lotTables(D.lots);
+  search();
+}
+function search(){
+  if(SB){ sbSearch(); return; }
+  const D=resultsData(); if(!D||D.src==="locked") return;
+  const toks=norm($("#q").value).split(/\s+/).filter(t=>t.length>=2);
+  const box=$("#matches");
+  if(!toks.length){ box.innerHTML=""; return; }
+  const hit=n=>{ const k=norm(n); return toks.every(t=>k.includes(t)); };
+  const out=[];
+  D.lots.forEach((lot,i)=>lot.forEach(x=>{
+    if(hit(x.parrain)) out.push({me:x.parrain,role:"Parrain",x,lot:i+1});
+    x.filleuls.forEach(f=>{ if(hit(f)) out.push({me:f,role:"Filleul",x,lot:i+1}); });
+  }));
+  if(!out.length){ box.innerHTML=`<p class="hint">Aucun nom ne correspond à « ${esc($("#q").value)} ». Essayez seulement votre nom de famille.</p>`; return; }
+  box.innerHTML=out.slice(0,30).map(m=>{
+    const others=m.x.filleuls.filter(f=>f!==m.me);
+    const body = m.role==="Parrain"
+      ? `<div class="rel">${m.x.filleuls.length>1?"Vos filleuls":"Votre filleul"} : ${m.x.filleuls.map(f=>`<b>${esc(f)}</b>`).join(" et ")}</div>`
+      : `<div class="rel">Votre parrain : <b>${esc(m.x.parrain)}</b></div>${others.length?`<div class="rel">Même parrain que vous : ${others.map(esc).join(", ")}</div>`:""}`;
+    return `<div class="card match ${m.x.fil.toLowerCase()}"><div class="who-l">${m.role} · ${m.x.fil} · Lot ${m.lot}</div><div class="nm">${esc(m.me)}</div><hr>${body}</div>`;
+  }).join("") + (out.length>30?`<p class="hint">${out.length-30} autres résultats : précisez votre recherche.</p>`:"");
+}
+$("#q").addEventListener("input",search);
+$("#codeForm").addEventListener("submit",async e=>{ e.preventDefault(); $("#codeMsg").textContent="Vérification…";
+  if(SB){ try{ if(await sbCheckCode($("#code").value.trim())){ $("#codeMsg").textContent=""; renderResView(); $("#q").focus(); } else $("#codeMsg").textContent="Code incorrect. Vérifiez auprès des organisateurs."; }catch(err){ $("#codeMsg").textContent=sbErr(err); } return; }
+  if(await tryCode($("#code").value)){ $("#codeMsg").textContent=""; renderResView(); $("#q").focus(); } else $("#codeMsg").textContent="Code incorrect. Vérifiez auprès des organisateurs."; });
+$("#lockOpen").addEventListener("click",async()=>{ $("#lockMsg").textContent="Vérification…";
+  if(SB){ try{ const ok=await sbUnlock($("#lockCode").value); $("#lockMsg").textContent=ok?"":"Code incorrect."; }catch(err){ $("#lockMsg").textContent=sbErr(err); } return; }
+  if(await tryCode($("#lockCode").value)){ lock.open=true; $("#lockMsg").textContent="";
+    state.result={date:UNLOCKED.date,lots:UNLOCKED.lots,reveal:$("#revealMode").checked}; save(); renderAll(); }
+  else $("#lockMsg").textContent="Code incorrect."; });
+(async()=>{ let c=null; try{c=sessionStorage.getItem("hm.code")}catch(e){} if(c&&OFFICIAL&&!UNLOCKED&&await tryCode(c)) renderResView(); })();
+
+async function setupShare(){
+  if(SB){
+    $("#publishBtn").addEventListener("click",()=>{ $("#confirmPublish").hidden=false; });
+    $("#publishNo").addEventListener("click",()=>{ $("#confirmPublish").hidden=true; });
+    $("#publishYes").addEventListener("click",async()=>{
+      const code=$("#pubCode").value.trim();
+      if(code.length<6){ $("#shareMsg").textContent="Le code doit contenir au moins 6 caractères."; return; }
+      if(code!==$("#pubCode2").value.trim()){ $("#shareMsg").textContent="Les deux codes ne sont pas identiques."; return; }
+      $("#confirmPublish").hidden=true; $("#publishBtn").disabled=true; $("#shareMsg").textContent="Publication en cours…";
+      try{ await sbPublish(code); }catch(err){ $("#shareMsg").textContent="La publication a échoué : "+sbErr(err); }
+      $("#publishBtn").disabled=false;
+    });
+    sbShareState(); return;
+  }
+  let art=null; try{ art = window.claude && window.claude.use ? await window.claude.use("artifact") : null; }catch(e){ art=null; }
+  if(!art){ $("#shareActions").hidden=true; $("#shareMsg").textContent="L'enregistrement pour le partage se fait depuis la version en ligne de l'application. Exportez le tirage en Excel, puis chargez-le dans la version en ligne avec « Charger un tirage déjà fait »."; return; }
+  if(OFFICIAL&&OFFICIAL.date) $("#shareMsg").textContent="Un tirage est déjà enregistré (le "+fmtDate(OFFICIAL.date)+").";
+  $("#publishBtn").addEventListener("click",()=>{ $("#confirmPublish").hidden=false; });
+  $("#publishNo").addEventListener("click",()=>{ $("#confirmPublish").hidden=true; });
+  $("#publishYes").addEventListener("click",async()=>{
+    const code=$("#pubCode").value.trim();
+    if(code.length<6){ $("#shareMsg").textContent="Le code doit contenir au moins 6 caractères."; return; }
+    if(code!==$("#pubCode2").value.trim()){ $("#shareMsg").textContent="Les deux codes ne sont pas identiques."; return; }
+    $("#confirmPublish").hidden=true; $("#publishBtn").disabled=true; $("#shareMsg").textContent="Chiffrement et enregistrement en cours…";
+    try{
+      const enc=await encryptResult({date:state.result.date, lots:state.result.lots}, code);
+      const data=JSON.stringify(enc).replace(/</g,"\\u003c");
+      const a=SRC.indexOf(OFF_OPEN), b=SRC.indexOf(OFF_CLOSE,a);
+      if(a<0||b<0) throw {code:"source"};
+      const content=SRC.slice(0,a+OFF_OPEN.length)+data+SRC.slice(b);
+      const html='<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px/1.4 system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>'+content+'</body></html>';
+      await art.publish(html);
+      $("#shareMsg").textContent="Tirage enregistré. La page se recharge avec les résultats.";
+    }catch(err){
+      const c=err&&err.code;
+      $("#shareMsg").textContent = c==="not_writer"||c==="not_granted" ? "Seul le propriétaire de l'application peut enregistrer le tirage."
+        : c==="conflict" ? "L'application vient d'être modifiée ailleurs. Relancez l'enregistrement."
+        : "L'enregistrement a échoué ("+(c||"erreur")+"). Réessayez.";
+      $("#publishBtn").disabled=false;
+    }
+  });
+}
+
+// Charger un tirage exporté en Excel (par exemple fait avec la version hors ligne)
+$("#loadDrawBtn").addEventListener("click",()=>$("#drawInput").click());
+$("#drawInput").addEventListener("change",async e=>{
+  const f=e.target.files[0]; e.target.value=""; if(!f) return;
+  const msg=$("#loadDrawMsg");
+  try{
+    if(typeof XLSX==="undefined") throw new Error("Le lecteur Excel n'est pas chargé.");
+    const wb=XLSX.read(await f.arrayBuffer(),{type:"array",codepage:65001});
+    const aoa=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:""}).map(r=>r.map(c=>String(c).trim()));
+    const hi=aoa.findIndex(r=>r.some(c=>norm(c)==="lot"));
+    if(hi<0) throw new Error("Ce fichier n'est pas un export de tirage (colonne « Lot » introuvable).");
+    const h=aoa[hi].map(norm), iL=h.indexOf("lot"), iF=h.findIndex(x=>x.startsWith("filiere")), iP=h.findIndex(x=>x.startsWith("parrain")), iN=h.findIndex(x=>x.startsWith("filleul"));
+    if([iF,iP,iN].some(i=>i<0)) throw new Error("Colonnes Filière, Parrain ou Filleul introuvables.");
+    const lots=new Map();
+    aoa.slice(hi+1).forEach(r=>{ if(!r[iP]||!r[iN]) return; const L=+r[iL]||1;
+      if(!lots.has(L)) lots.set(L,new Map()); const m=lots.get(L), k=r[iF]+"|"+r[iP];
+      if(!m.has(k)) m.set(k,{fil:r[iF].toUpperCase(),parrain:r[iP],filleuls:[]}); m.get(k).filleuls.push(r[iN]); });
+    const arr=[...lots.keys()].sort((a,b)=>a-b).map(k=>[...lots.get(k).values()]);
+    if(!arr.length) throw new Error("Aucune attribution trouvée dans ce fichier.");
+    state.result={date:new Date().toISOString(),lots:arr,reveal:$("#revealMode").checked};
+    save(); renderResults(); renderResView(); msg.textContent=`Tirage chargé : ${arr.flat().length} familles en ${arr.length} lots.`;
+    $("#results").scrollIntoView({behavior:"smooth",block:"start"});
+  }catch(err){ msg.textContent=err.message||String(err); }
+});
+
+
+// ---------- Mode Supabase (site séparé) : actif seulement si config.js est rempli ----------
+const CFG = window.HM_CONFIG||{};
+const SB = (CFG.supabaseUrl && CFG.supabaseAnonKey && window.supabase && window.supabase.createClient) ? window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey) : null;
+const sb = {user:null, organizer:false, cer:null, pub:null, code:null, saveT:null, qT:null};
+const YEAR = CFG.year || new Date().getFullYear();
+function OFFX(){ return SB ? (sb.cer&&sb.cer.locked ? {date:sb.cer.published_at} : null) : OFFICIAL; }
+const sbErr = e => (e&&e.message)||String(e);
+async function sbInit(){
+  $("#orgBtn").hidden=false; $("#allRes").hidden=true;
+  $("#sharePanel p.hint").textContent="Le tirage est publié sur le serveur et protégé par un code d'accès. Avec l'adresse du site et le code, chacun peut chercher son nom : seules les familles correspondantes s'affichent, jamais la liste complète. Le tirage publié est verrouillé : on ne peut le refaire qu'avec le code.";
+  $("#sharePanel h3").textContent="Publier le tirage officiel";
+  $("#publishBtn").textContent="Publier et verrouiller";
+  try{ const {data}=await SB.rpc("public_ceremony"); sb.pub=(data&&data[0])||null; }catch(e){ sb.pub=null; }
+  const {data:{session}}=await SB.auth.getSession();
+  await sbSetUser(session&&session.user);
+  SB.auth.onAuthStateChange((_ev,s)=>{ const u=s&&s.user; if((u&&u.id)!==(sb.user&&sb.user.id)) sbSetUser(u); });
+}
+async function sbSetUser(u){
+  sb.user=u||null; sb.organizer=false; sb.cer=null;
+  if(u){
+    const {data}=await SB.from("organizers").select("user_id").eq("user_id",u.id).maybeSingle();
+    sb.organizer=!!data;
+    if(sb.organizer){
+      const r=await SB.rpc("ensure_ceremony",{p_year:YEAR}); if(!r.error) sb.cer=r.data;
+      const {data:rows}=await SB.from("student_lists").select("*").eq("ceremony_id",sb.cer.id);
+      (rows||[]).forEach(r=>{ if(state.lists[r.filiere]) state.lists[r.filiere][r.role]=r.data; });
+      if(sb.cer.locked) await sbLoadOfficial();
+    }
+  }
+  $("#orgBtn").textContent = sb.user ? (sb.organizer?"Organisateur · Déconnexion":"Déconnexion") : "Espace organisateur";
+  lock.open=false; renderAll(); sbShareState();
+  if(sb.user && !sb.organizer) $("#shareMsg").textContent="Ce compte n'est pas encore autorisé comme organisateur.";
+}
+async function sbLoadOfficial(){
+  const {data}=await SB.from("pairings").select("*").eq("ceremony_id",sb.cer.id).order("lot").order("position").order("id");
+  const lots=new Map();
+  (data||[]).forEach(r=>{ if(!lots.has(r.lot)) lots.set(r.lot,new Map()); const m=lots.get(r.lot), k=r.filiere+"|"+r.parrain;
+    if(!m.has(k)) m.set(k,{fil:r.filiere,parrain:r.parrain,filleuls:[]}); m.get(k).filleuls.push(r.filleul); });
+  const arr=[...lots.keys()].sort((a,b)=>a-b).map(k=>[...lots.get(k).values()]);
+  if(arr.length){ state.result={date:sb.cer.published_at,lots:arr,reveal:$("#revealMode").checked}; store("mecalink.result",state.result); }
+}
+function sbQueueSave(){
+  if(!SB||!sb.organizer||!sb.cer) return;
+  clearTimeout(sb.saveT);
+  sb.saveT=setTimeout(async()=>{
+    const rows=[]; FILIERES.forEach(F=>ROLES.forEach(R=>{ const L=state.lists[F.id][R.id]; if(!L.sample) rows.push({ceremony_id:sb.cer.id,filiere:F.id,role:R.id,data:L,updated_by:sb.user.id,updated_at:new Date().toISOString()}); }));
+    if(rows.length){ const {error}=await SB.from("student_lists").upsert(rows); if(error) console.warn(error); }
+  },800);
+}
+function sbShareState(){
+  $("#shareActions").hidden=!sb.organizer;
+  $("#shareMsg").textContent = !sb.user ? "Connectez-vous dans l'espace organisateur pour publier le tirage officiel."
+    : !sb.organizer ? "" : (sb.cer&&sb.cer.locked ? "Tirage officiel publié le "+fmtDate(sb.cer.published_at)+" et verrouillé." : "");
+}
+async function sbPublish(code){
+  const rows=[]; state.result.lots.forEach((lot,i)=>lot.forEach((x,j)=>x.filleuls.forEach(f=>rows.push({lot:i+1,position:j+1,filiere:x.fil,parrain:x.parrain,filleul:f}))));
+  const {data,error}=await SB.rpc("publish_draw",{p_ceremony:sb.cer.id,p_code:code,p_rows:rows});
+  if(error) throw new Error(error.message);
+  sb.cer=data; sb.pub={year:data.year,published_at:data.published_at,filleuls:rows.length}; lock.open=false; renderAll(); sbShareState();
+}
+async function sbUnlock(code){
+  const {data,error}=await SB.rpc("unlock_draw",{p_ceremony:sb.cer.id,p_code:code});
+  if(error) throw new Error(error.message);
+  if(!data) return false;
+  sb.cer.locked=false; sb.pub=null; lock.open=true; renderAll(); sbShareState(); return true;
+}
+async function sbCheckCode(code){
+  const {data,error}=await SB.rpc("find_family",{p_code:code,p_query:""});
+  if(error) throw new Error(error.message);
+  if(data&&data[0]&&data[0].role==="__code_incorrect__") return false;
+  sb.code=code; try{sessionStorage.setItem("hm.sbcode",code)}catch(e){} return true;
+}
+function sbRenderResView(){
+  $("#homeFind").hidden=!sb.pub;
+  $("#resEmpty").hidden=!!sb.pub; $("#resLocked").hidden=!sb.pub||!!sb.code; $("#resBody").hidden=!sb.pub||!sb.code;
+  if(!sb.pub){ $("#resEmpty").innerHTML="Les résultats du parrainage n'ont pas encore été publiés. Revenez après la cérémonie."; return; }
+  $("#resInfo").textContent=`Résultats officiels publiés le ${fmtDate(sb.pub.published_at)} · ${sb.pub.filleuls} filleuls parrainés. Seules les familles qui correspondent à votre recherche s'affichent.`;
+}
+function sbSearch(){
+  clearTimeout(sb.qT); const box=$("#matches"), q=$("#q").value.trim();
+  if(norm(q).length<3){ box.innerHTML=""; return; }
+  sb.qT=setTimeout(async()=>{
+    const {data,error}=await SB.rpc("find_family",{p_code:sb.code,p_query:q});
+    if(error){ box.innerHTML=`<p class="hint">${esc(error.message)}</p>`; return; }
+    if(data&&data[0]&&data[0].role==="__code_incorrect__"){ sb.code=null; sbRenderResView(); return; }
+    if(!data||!data.length){ box.innerHTML=`<p class="hint">Aucun nom ne correspond à « ${esc(q)} ». Essayez seulement votre nom de famille.</p>`; return; }
+    box.innerHTML=data.map(m=>{
+      const others=(m.filleuls||[]).filter(f=>f!==m.nom);
+      const body = m.role==="Parrain"
+        ? `<div class="rel">${m.filleuls.length>1?"Vos filleuls":"Votre filleul"} : ${m.filleuls.map(f=>`<b>${esc(f)}</b>`).join(" et ")}</div>`
+        : `<div class="rel">Votre parrain : <b>${esc(m.parrain)}</b></div>${others.length?`<div class="rel">Même parrain que vous : ${others.map(esc).join(", ")}</div>`:""}`;
+      return `<div class="card match ${String(m.filiere).toLowerCase()}"><div class="who-l">${m.role} · ${m.filiere} · Lot ${m.lot}</div><div class="nm">${esc(m.nom)}</div><hr>${body}</div>`;
+    }).join("");
+  },300);
+}
+// Connexion organisateur
+$("#orgBtn").addEventListener("click",async()=>{ if(sb.user){ await SB.auth.signOut(); await sbSetUser(null); } else { $("#loginModal").hidden=false; $("#lgEmail").focus(); } });
+$("#lgClose").addEventListener("click",()=>{ $("#loginModal").hidden=true; });
+$("#loginForm").addEventListener("submit",async e=>{ e.preventDefault(); $("#lgMsg").textContent="Connexion…";
+  const {data,error}=await SB.auth.signInWithPassword({email:$("#lgEmail").value.trim(),password:$("#lgPass").value});
+  if(error){ $("#lgMsg").textContent="Connexion refusée : e-mail ou mot de passe incorrect."; return; }
+  $("#lgMsg").textContent=""; $("#loginModal").hidden=true; await sbSetUser(data.user); });
+
+// ---------- Navigation ----------
+const VIEWS=["accueil","statistiques","attribution","resultats"];
+function route(){
+  const v=VIEWS.includes(location.hash.slice(1))?location.hash.slice(1):"accueil";
+  document.querySelectorAll("[data-view]").forEach(s=>s.hidden=s.dataset.view!==v);
+  document.querySelectorAll("nav.tabs a").forEach(a=>a.classList.toggle("on",a.dataset.tab===v));
+  window.scrollTo(0,0);
+}
+window.addEventListener("hashchange",route);
+
+// ---------- Démarrage ----------
+function renderAll(){ renderNotice(); renderCards(); renderSlots(); renderDraw(); renderResults(); renderResView(); }
+const sl=load("mecalink.lists"), sr=load("mecalink.result");
+if(sl && FILIERES.every(F=>sl[F.id]&&sl[F.id].p&&sl[F.id].f)) state.lists=sl;
+if(sr && sr.lots) state.result=sr;
+renderAll(); route(); setupShare();
+if(SB){ try{ sb.code=sessionStorage.getItem("hm.sbcode"); }catch(e){} sbInit().catch(e=>console.warn(e)); }
+})();
+</script>
+</body></html>
